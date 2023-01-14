@@ -1,0 +1,3 @@
+#!/bin/bash
+mv $1 $1.original
+cat $1.original | jq . | iconv -f utf8 -t latin1 > $1

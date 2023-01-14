@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+require 'json'
+require 'ostruct'
+require 'pry'
+require 'date'
+require 'active_support/time'
+require 'words_counted'
+
+json = JSON.parse(File.read(ARGV[0]), object_class: OpenStruct)
+
+messages = json.messages.reverse
+
+wordcount = 0
+messages.each_with_index do |message, index|
+  new_time = false
+  new_sender = false
+  sender = message.sender_name
+  previous_message = messages[index - 1]
+  previous_sender = previous_message.sender_name
+
+  if (message.timestamp_ms - (previous_message&.timestamp_ms || 0)) > 1000000 || index == 0
+    new_time = true
+    puts ""
+    puts ""
+    puts "~~~~~  #{DateTime.strptime(message.timestamp_ms.to_s, '%Q').in_time_zone('Eastern Time (US & Canada)').strftime("%A, %d %b %Y %l:%M %p")}  ~~~~~"
+    puts ""
+  elsif sender != previous_sender
+    new_sender = true
+    puts ""
+  end
+
+  sender_stanza = new_sender || new_time ? "#{sender}: " : ""
+  content = message.content || (message.photos || message.videos || message.files || message.stickers || []).map(&:uri).join("\n")
+  wordcount += WordsCounted.count(message.content || '').token_count
+  reactions = (message.reactions || []).map { |event| event.reaction }.join
+
+
+  puts "#{sender_stanza}#{content}  #{reactions.length > 0 ? "{ #{reactions} }" : ''}"
+end
+
+puts "Total Words: #{wordcount}"
