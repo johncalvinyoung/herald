@@ -6,6 +6,8 @@ require 'date'
 require 'active_support/time'
 require 'words_counted'
 
+`mojibake #{ARGV[0]}`
+
 json = JSON.parse(File.read(ARGV[0]), object_class: OpenStruct)
 
 messages = json.messages.reverse
